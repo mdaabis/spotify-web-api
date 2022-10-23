@@ -1,23 +1,18 @@
+import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
+
 import java.net.URI;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.SpotifyHttpManager;
-import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
-
 public class SpotifyMain {
-
-	private static final String CLIENT_ID = "e67295937de0463bba36cf5f6c8b8e6f";
-	private static final String CLIENT_SECRET = "e8fb8960573142819dbec0d5c1763a5c";
-	private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost:8080");
 
 
 	  private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
-			    .setClientId(CLIENT_ID)
-			    .setClientSecret(CLIENT_SECRET)
-			    .setRedirectUri(redirectUri)
+			    .setClientId(AuthorisationUtils.CLIENT_ID)
+			    .setClientSecret(AuthorisationUtils.CLIENT_SECRET)
+			    .setRedirectUri(AuthorisationUtils.redirectUri)
 			    .build();
 	  
 	  private static final AuthorizationCodeUriRequest authorizationCodeUriRequest = spotifyApi.authorizationCodeUri()

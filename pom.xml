@@ -28,5 +28,13 @@
   		<artifactId>slf4j-jdk14</artifactId>
   		<version>1.7.30</version>
   	</dependency>
+
+    <dependency>
+      <groupId>com.spotify.android</groupId>
+      <artifactId>auth</artifactId>
+      <version>1.2.6</version>
+      <type>aar</type>
+    </dependency>
+
   </dependencies>
 </project>
