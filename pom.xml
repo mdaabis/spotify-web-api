@@ -32,19 +32,19 @@
   	<dependency>
   		<groupId>se.michaelthelin.spotify</groupId>
   		<artifactId>spotify-web-api-java</artifactId>
-  		<version>7.1.0</version>
+  		<version>7.2.2</version>
   	</dependency>
   	
   	<dependency>
   		<groupId>org.slf4j</groupId>
   		<artifactId>slf4j-jdk14</artifactId>
-  		<version>1.7.30</version>
+  		<version>2.0.3</version>
   	</dependency>
 
     <dependency>
       <groupId>com.spotify.android</groupId>
       <artifactId>auth</artifactId>
-      <version>1.2.6</version>
+      <version>2.0.2</version>
       <type>aar</type>
     </dependency>
     <dependency>
