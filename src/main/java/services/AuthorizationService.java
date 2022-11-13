@@ -18,12 +18,13 @@ public class AuthorizationService
     public static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(AuthorisationUtils.CLIENT_ID)
             .setClientSecret(AuthorisationUtils.CLIENT_SECRET)
-            .setRedirectUri(AuthorisationUtils.redirectUri)
+            .setRedirectUri(AuthorisationUtils.REDIRECT_URI)
             .build();
 
     public String spotifyLogin() throws MalformedURLException
     {
         AuthorizationCodeUriRequest authorizationCodeUriRequest = spotifyApi.authorizationCodeUri()
+                .scope(AuthorisationUtils.SCOPES)
                 .build();
         final URI uri = authorizationCodeUriRequest.execute();
         return uri.toURL().toString();
@@ -41,7 +42,7 @@ public class AuthorizationService
             // Set access and refresh token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
-
+            System.out.println(spotifyApi.getAccessToken() + " : " + spotifyApi.getRefreshToken());
         } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e)
         {
             System.out.println("Error: " + e.getMessage());

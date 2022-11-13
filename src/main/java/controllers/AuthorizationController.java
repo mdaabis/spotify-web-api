@@ -12,9 +12,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 
 @RestController
-public class AuthorisationController
+public class AuthorizationController
 {
-
     private final AuthorizationService authorizationService = new AuthorizationService();
 
     @GetMapping(value = "/user")
