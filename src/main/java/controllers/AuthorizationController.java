@@ -10,12 +10,10 @@ import org.springframework.web.servlet.view.RedirectView;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.List;
 
 @RestController
-public class AuthorisationController
+public class AuthorizationController
 {
-
     private final AuthorizationService authorizationService = new AuthorizationService();
 
     @GetMapping(value = "/user")
@@ -27,11 +25,5 @@ public class AuthorisationController
     public String getRedirectCode(@RequestParam("code") String userCode, HttpServletResponse response) throws IOException
     {
         return authorizationService.redirect(userCode, response);
-    }
-
-    @GetMapping(value = "/get-user-playlists")
-    public List<String> getUserPlaylists()
-    {
-        return authorizationService.getUserPlaylists();
     }
 }
