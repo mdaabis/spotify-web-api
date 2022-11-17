@@ -3,13 +3,18 @@ package main.java.services;
 import main.java.utils.AuthorisationUtils;
 import org.apache.hc.core5.http.ParseException;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.model_objects.AbstractModelObject;
+import se.michaelthelin.spotify.model_objects.special.SearchResult;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.requests.data.playlists.CreatePlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfUsersPlaylistsRequest;
+import se.michaelthelin.spotify.requests.data.search.SearchItemRequest;
+import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,5 +53,44 @@ public class PlaylistService
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    public void forkPlaylist()
+    {
+
+    }
+
+    public <T extends AbstractModelObject> List<T> search(String searchString, String... typeArray)
+    {
+        String type = String.join(",", typeArray);
+        final SearchItemRequest searchItemRequest = AuthorizationService.spotifyApi.searchItem(searchString, type)
+                .limit(50)
+                .build();
+
+        List<T> list = new ArrayList<>();
+        try
+        {
+            final SearchResult searchResult = searchItemRequest.execute();
+
+            switch (type)
+            {
+                case "playlist" -> Arrays.stream(searchResult.getPlaylists().getItems()).forEach(e -> list.add((T) e));
+                case "track" -> Arrays.stream(searchResult.getTracks().getItems()).forEach(e -> list.add((T) e));
+                case "album" -> Arrays.stream(searchResult.getAlbums().getItems()).forEach(e -> list.add((T) e));
+                case "artist" -> Arrays.stream(searchResult.getArtists().getItems()).forEach(e -> list.add((T) e));
+                case "show" -> Arrays.stream(searchResult.getShows().getItems()).forEach(e -> list.add((T) e));
+                case "episode" -> Arrays.stream(searchResult.getEpisodes().getItems()).forEach(e -> list.add((T) e));
+            }
+        }
+        catch (IOException | SpotifyWebApiException | ParseException e)
+        {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    public void addTracksToPlaylist()
+    {
+
     }
 }
