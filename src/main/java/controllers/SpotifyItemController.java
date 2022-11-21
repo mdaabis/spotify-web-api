@@ -1,8 +1,7 @@
 package main.java.controllers;
 
-import main.java.services.PlaylistService;
+import main.java.services.SpotifyItemService;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.michaelthelin.spotify.model_objects.AbstractModelObject;
@@ -10,9 +9,9 @@ import se.michaelthelin.spotify.model_objects.AbstractModelObject;
 import java.util.List;
 
 @RestController
-public class PlaylistController
+public class SpotifyItemController
 {
-    private final PlaylistService playlistService = new PlaylistService();
+    private final SpotifyItemService playlistService = new SpotifyItemService();
 
     @GetMapping(value = "/user-playlists")
     public List<String> userPlaylists()
@@ -32,5 +31,9 @@ public class PlaylistController
        return playlistService.search(search, type);
     }
 
-
+    @GetMapping(value = "/get-playlist")
+    public String getPlaylistById(@RequestParam("id") String id)
+    {
+        return playlistService.getPlaylistByID(id);
+    }
 }

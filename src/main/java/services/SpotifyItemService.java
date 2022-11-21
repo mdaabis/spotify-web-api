@@ -11,16 +11,21 @@ import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.requests.data.playlists.CreatePlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfUsersPlaylistsRequest;
 import se.michaelthelin.spotify.requests.data.search.SearchItemRequest;
-import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsRequest;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PlaylistService
+public class SpotifyItemService
 {
+    private final String REQUEST_URL = AuthorisationUtils.BASE_SPOTIFY_URL + "playlists/";
+
     public List<String> getUserPlaylists()
     {
         GetListOfUsersPlaylistsRequest list = AuthorizationService.spotifyApi.getListOfUsersPlaylists(AuthorisationUtils.USER_ID)
@@ -28,13 +33,13 @@ public class PlaylistService
         try
         {
             final Paging<PlaylistSimplified> playlistPaging = list.execute();
-            return Arrays.stream(playlistPaging.getItems()).toList().stream().map(this::playlists).collect(Collectors.toList());
+            return Arrays.stream(playlistPaging.getItems()).toList().stream().map(this::formatPlaylists).collect(Collectors.toList());
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private String playlists(PlaylistSimplified playlist)
+    private String formatPlaylists(PlaylistSimplified playlist)
     {
         return playlist.getName() + " : " + playlist.getId();
     }
@@ -46,7 +51,6 @@ public class PlaylistService
                 .public_(false)
                 .description("MD testing api.")
                 .build();
-
         try {
             final Playlist playlist = createPlaylistRequest.execute();
             System.out.println("Name: " + playlist.getName());
@@ -55,9 +59,35 @@ public class PlaylistService
         }
     }
 
-    public void forkPlaylist()
+    public void forkPlaylist(String id)
     {
 
+    }
+
+    public String getPlaylistByID(String id)
+    {
+        StringBuilder result = new StringBuilder();
+        String getPlaylistItemsUrl = REQUEST_URL + id + "/tracks";
+        try
+        {
+            URL url = new URL(getPlaylistItemsUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Authorization", "Bearer " + AuthorizationService.spotifyApi.getAccessToken());
+            conn.setRequestProperty("Content_Type", "application/json");
+            conn.setRequestMethod("GET");
+
+            InputStreamReader inputStreamReader = new InputStreamReader(conn.getInputStream());
+            BufferedReader reader = new BufferedReader(inputStreamReader);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                result.append(line);
+            }
+        }
+        catch (IOException e)
+        {
+            System.out.println("Error: " + e);
+        }
+        return result.toString();
     }
 
     public <T extends AbstractModelObject> List<T> search(String searchString, String... typeArray)
