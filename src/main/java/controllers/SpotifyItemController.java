@@ -40,7 +40,7 @@ public class SpotifyItemController
     }
 
     @GetMapping(value = "/fork-playlist")
-    public List<String> forkPlaylist(@RequestParam("id") String playlistId, @RequestParam("name") String newPlaylistName)
+    public String[] forkPlaylist(@RequestParam("id") String playlistId, @RequestParam("name") String newPlaylistName)
     {
         return playlistService.forkPlaylist(playlistId, newPlaylistName);
     }

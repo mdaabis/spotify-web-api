@@ -12,6 +12,7 @@ import se.michaelthelin.spotify.model_objects.special.SearchResult;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
+import se.michaelthelin.spotify.requests.data.playlists.AddItemsToPlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.CreatePlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfUsersPlaylistsRequest;
 import se.michaelthelin.spotify.requests.data.search.SearchItemRequest;
@@ -27,13 +28,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static main.java.services.AuthorizationService.spotifyApi;
+
 public class SpotifyItemService
 {
     private final String REQUEST_URL = SpotifyItemUtils.BASE_SPOTIFY_URL + "playlists/";
 
     public List<String> getUserPlaylists()
     {
-        GetListOfUsersPlaylistsRequest list = AuthorizationService.spotifyApi.getListOfUsersPlaylists(AuthorisationUtils.USER_ID)
+        GetListOfUsersPlaylistsRequest list = spotifyApi.getListOfUsersPlaylists(AuthorisationUtils.USER_ID)
                 .build();
         try
         {
@@ -49,22 +52,24 @@ public class SpotifyItemService
         return playlist.getName() + " : " + playlist.getId();
     }
 
-    public void createNewPlaylist(String name)
+    public String createNewPlaylist(String name)
     {
-        CreatePlaylistRequest createPlaylistRequest = AuthorizationService.spotifyApi.createPlaylist(AuthorisationUtils.USER_ID, name)
+        String playlistId = null;
+        CreatePlaylistRequest createPlaylistRequest = spotifyApi.createPlaylist(AuthorisationUtils.USER_ID, name)
                 .collaborative(false)
                 .public_(false)
-                .description("MD testing api.")
                 .build();
         try {
             final Playlist playlist = createPlaylistRequest.execute();
+            playlistId = playlist.getId();
             System.out.println("Name: " + playlist.getName());
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }
+        return playlistId;
     }
 
-    public List<String> forkPlaylist(String playlistIdToFork, String newPlaylistName)
+    public String[] forkPlaylist(String playlistIdToFork, String newPlaylistName)
     {
         String jsonString = getPlaylistByID(playlistIdToFork);
         JSONObject jsonObject = null;
@@ -75,11 +80,17 @@ public class SpotifyItemService
         }
 
         JSONArray jsonArray = jsonObject.getJSONArray("items");
-
-        return IntStream
+        List<String> trackUriList = IntStream
                 .range(0,jsonArray.length())
-                .mapToObj(i -> returnTrackId(jsonArray.getJSONObject(i)))
+                .mapToObj(i -> returnTrackUri(jsonArray.getJSONObject(i)))
                 .collect(Collectors.toList());
+        String[] trackUriArray = trackUriList.toArray(new String[trackUriList.size()]);
+
+        String newPlaylistID = createNewPlaylist(newPlaylistName);
+
+        String addTracksToPlaylistResponse = addTracksToPlaylist(newPlaylistID, trackUriArray);
+
+        return trackUriArray;
     }
 
     public String getPlaylistByID(String playlistId)
@@ -90,7 +101,7 @@ public class SpotifyItemService
         {
             URL url = new URL(getPlaylistItemsUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestProperty("Authorization", "Bearer " + AuthorizationService.spotifyApi.getAccessToken());
+            conn.setRequestProperty("Authorization", "Bearer " + spotifyApi.getAccessToken());
             conn.setRequestProperty("Content_Type", "application/json");
             conn.setRequestMethod("GET");
 
@@ -111,7 +122,7 @@ public class SpotifyItemService
     public <T extends AbstractModelObject> List<T> search(String searchString, String... typeArray)
     {
         String type = String.join(",", typeArray);
-        final SearchItemRequest searchItemRequest = AuthorizationService.spotifyApi.searchItem(searchString, type)
+        final SearchItemRequest searchItemRequest = spotifyApi.searchItem(searchString, type)
                 .limit(50)
                 .build();
 
@@ -137,13 +148,21 @@ public class SpotifyItemService
         return list;
     }
 
-    public void addTracksToPlaylist()
+    public String addTracksToPlaylist(String playlistId, String[] uris)
     {
-
+        final AddItemsToPlaylistRequest addItemsToPlaylistRequest = spotifyApi
+                .addItemsToPlaylist(playlistId, uris)
+                .build();
+        try {
+            addItemsToPlaylistRequest.execute();
+        } catch (IOException | SpotifyWebApiException | ParseException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return addItemsToPlaylistRequest.toString();
     }
 
-    private String returnTrackId(JSONObject json)
+    private String returnTrackUri(JSONObject json)
     {
-        return json.getJSONObject("track").getString("id");
+        return json.getJSONObject("track").getString("uri");
     }
 }
