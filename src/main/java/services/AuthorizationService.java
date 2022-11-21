@@ -42,7 +42,6 @@ public class AuthorizationService
             // Set access and refresh token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
-            System.out.println(spotifyApi.getAccessToken() + " : " + spotifyApi.getRefreshToken());
         } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e)
         {
             System.out.println("Error: " + e.getMessage());
