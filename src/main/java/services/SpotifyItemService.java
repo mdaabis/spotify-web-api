@@ -1,7 +1,11 @@
 package main.java.services;
 
 import main.java.utils.AuthorisationUtils;
+import main.java.utils.SpotifyItemUtils;
 import org.apache.hc.core5.http.ParseException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.AbstractModelObject;
 import se.michaelthelin.spotify.model_objects.special.SearchResult;
@@ -21,10 +25,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SpotifyItemService
 {
-    private final String REQUEST_URL = AuthorisationUtils.BASE_SPOTIFY_URL + "playlists/";
+    private final String REQUEST_URL = SpotifyItemUtils.BASE_SPOTIFY_URL + "playlists/";
 
     public List<String> getUserPlaylists()
     {
@@ -59,15 +64,28 @@ public class SpotifyItemService
         }
     }
 
-    public void forkPlaylist(String id)
+    public List<String> forkPlaylist(String playlistIdToFork, String newPlaylistName)
     {
+        String jsonString = getPlaylistByID(playlistIdToFork);
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = new JSONObject(jsonString);
+        }catch (JSONException e){
+            System.out.println("Error" + e.toString());
+        }
 
+        JSONArray jsonArray = jsonObject.getJSONArray("items");
+
+        return IntStream
+                .range(0,jsonArray.length())
+                .mapToObj(i -> returnTrackId(jsonArray.getJSONObject(i)))
+                .collect(Collectors.toList());
     }
 
-    public String getPlaylistByID(String id)
+    public String getPlaylistByID(String playlistId)
     {
         StringBuilder result = new StringBuilder();
-        String getPlaylistItemsUrl = REQUEST_URL + id + "/tracks";
+        String getPlaylistItemsUrl = REQUEST_URL + playlistId + "/tracks";
         try
         {
             URL url = new URL(getPlaylistItemsUrl);
@@ -122,5 +140,10 @@ public class SpotifyItemService
     public void addTracksToPlaylist()
     {
 
+    }
+
+    private String returnTrackId(JSONObject json)
+    {
+        return json.getJSONObject("track").getString("id");
     }
 }

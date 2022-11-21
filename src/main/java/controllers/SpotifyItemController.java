@@ -1,6 +1,8 @@
 package main.java.controllers;
 
 import main.java.services.SpotifyItemService;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,5 +37,11 @@ public class SpotifyItemController
     public String getPlaylistById(@RequestParam("id") String id)
     {
         return playlistService.getPlaylistByID(id);
+    }
+
+    @GetMapping(value = "/fork-playlist")
+    public List<String> forkPlaylist(@RequestParam("id") String playlistId, @RequestParam("name") String newPlaylistName)
+    {
+        return playlistService.forkPlaylist(playlistId, newPlaylistName);
     }
 }
