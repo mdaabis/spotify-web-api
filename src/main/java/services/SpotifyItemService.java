@@ -1,5 +1,6 @@
 package main.java.services;
 
+import main.java.models.CombinePlaylistsRequest;
 import main.java.utils.AuthorisationUtils;
 import main.java.utils.SpotifyItemUtils;
 import org.apache.hc.core5.http.ParseException;
@@ -9,6 +10,7 @@ import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.AbstractModelObject;
 import se.michaelthelin.spotify.model_objects.special.SearchResult;
+import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
@@ -22,9 +24,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -47,11 +47,6 @@ public class SpotifyItemService
         }
     }
 
-    private String formatPlaylists(PlaylistSimplified playlist)
-    {
-        return playlist.getName() + " : " + playlist.getId();
-    }
-
     public String createNewPlaylist(String name)
     {
         String playlistId = null;
@@ -62,7 +57,6 @@ public class SpotifyItemService
         try {
             final Playlist playlist = createPlaylistRequest.execute();
             playlistId = playlist.getId();
-            System.out.println("Name: " + playlist.getName());
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -71,6 +65,8 @@ public class SpotifyItemService
 
     public String[] forkPlaylist(String playlistIdToFork, String newPlaylistName)
     {
+        String newPlaylistID = createNewPlaylist(newPlaylistName);
+
         String jsonString = getPlaylistByID(playlistIdToFork);
         JSONObject jsonObject = null;
         try {
@@ -81,42 +77,44 @@ public class SpotifyItemService
 
         JSONArray jsonArray = jsonObject.getJSONArray("items");
         List<String> trackUriList = IntStream
-                .range(0,jsonArray.length())
-                .mapToObj(i -> returnTrackUri(jsonArray.getJSONObject(i)))
-                .collect(Collectors.toList());
+                .range(0, jsonArray.length())
+                .mapToObj(i -> returnTrackUri(jsonArray.getJSONObject(i))).toList();
         String[] trackUriArray = trackUriList.toArray(new String[trackUriList.size()]);
-
-        String newPlaylistID = createNewPlaylist(newPlaylistName);
-
-        String addTracksToPlaylistResponse = addTracksToPlaylist(newPlaylistID, trackUriArray);
+        addTracksToPlaylist(newPlaylistID, trackUriArray);
 
         return trackUriArray;
     }
 
-    public String getPlaylistByID(String playlistId)
+    public Set<String> combineAndForkMultiplePlaylists(CombinePlaylistsRequest combinePlaylistsRequest)
     {
-        StringBuilder result = new StringBuilder();
-        String getPlaylistItemsUrl = REQUEST_URL + playlistId + "/tracks";
-        try
-        {
-            URL url = new URL(getPlaylistItemsUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestProperty("Authorization", "Bearer " + spotifyApi.getAccessToken());
-            conn.setRequestProperty("Content_Type", "application/json");
-            conn.setRequestMethod("GET");
+        String[] playlistIdsToForkArray = combinePlaylistsRequest.getPlaylistIds().split(",");
+        String newPlaylistName = combinePlaylistsRequest.getNewPlaylistName();
+        String newPlaylistID = createNewPlaylist(newPlaylistName);
 
-            InputStreamReader inputStreamReader = new InputStreamReader(conn.getInputStream());
-            BufferedReader reader = new BufferedReader(inputStreamReader);
-            String line;
-            while ((line = reader.readLine()) != null) {
-                result.append(line);
-            }
-        }
-        catch (IOException e)
+        Set<String> trackUriSet = new HashSet<>();
+
+        for (String playlistId : playlistIdsToForkArray)
         {
-            System.out.println("Error: " + e);
+            // Refactor getting the playlistId again
+            String jsonString = getPlaylistByID(playlistId);
+            JSONObject jsonObject = null;
+            try
+            {
+                jsonObject = new JSONObject(jsonString);
+            }
+            catch (JSONException e)
+            {
+                System.out.println("Error" + e.toString());
+            }
+            JSONArray jsonArray = jsonObject.getJSONArray("items");
+
+            trackUriSet = IntStream
+                    .range(0, jsonArray.length())
+                    .mapToObj(i -> returnTrackUri(jsonArray.getJSONObject(i))).collect(Collectors.toSet());
+            String[] trackUriArray = trackUriSet.toArray(new String[0]);
+            addTracksToPlaylist(newPlaylistID, trackUriArray);
         }
-        return result.toString();
+        return trackUriSet;
     }
 
     public <T extends AbstractModelObject> List<T> search(String searchString, String... typeArray)
@@ -148,21 +146,51 @@ public class SpotifyItemService
         return list;
     }
 
-    public String addTracksToPlaylist(String playlistId, String[] uris)
+    public void addTracksToPlaylist(String playlistId, String[] uris)
     {
         final AddItemsToPlaylistRequest addItemsToPlaylistRequest = spotifyApi
                 .addItemsToPlaylist(playlistId, uris)
                 .build();
         try {
-            addItemsToPlaylistRequest.execute();
+            final SnapshotResult snapshotResult = addItemsToPlaylistRequest.execute();
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }
-        return addItemsToPlaylistRequest.toString();
+    }
+
+    public String getPlaylistByID(String playlistId)
+    {
+        StringBuilder result = new StringBuilder();
+        String getPlaylistItemsUrl = REQUEST_URL + playlistId + "/tracks";
+        try
+        {
+            URL url = new URL(getPlaylistItemsUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Authorization", "Bearer " + spotifyApi.getAccessToken());
+            conn.setRequestProperty("Content_Type", "application/json");
+            conn.setRequestMethod("GET");
+
+            InputStreamReader inputStreamReader = new InputStreamReader(conn.getInputStream());
+            BufferedReader reader = new BufferedReader(inputStreamReader);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                result.append(line);
+            }
+        }
+        catch (IOException e)
+        {
+            System.out.println("Error: " + e);
+        }
+        return result.toString();
     }
 
     private String returnTrackUri(JSONObject json)
     {
         return json.getJSONObject("track").getString("uri");
+    }
+
+    private String formatPlaylists(PlaylistSimplified playlist)
+    {
+        return playlist.getName() + " : " + playlist.getId();
     }
 }
