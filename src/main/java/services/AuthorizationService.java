@@ -1,6 +1,5 @@
 package main.java.services;
 
-import main.java.models.AuthorizationSingleton;
 import main.java.utils.AuthorisationUtils;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -39,10 +38,10 @@ public class AuthorizationService
         {
             final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeRequest.execute();
 
-            // Set access and refresh token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
-        } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e)
+        }
+        catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e)
         {
             System.out.println("Error: " + e.getMessage());
         }

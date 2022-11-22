@@ -42,7 +42,9 @@ public class SpotifyItemService
         {
             final Paging<PlaylistSimplified> playlistPaging = list.execute();
             return Arrays.stream(playlistPaging.getItems()).toList().stream().map(this::formatPlaylists).collect(Collectors.toList());
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
+        }
+        catch (IOException | SpotifyWebApiException | ParseException e)
+        {
             throw new RuntimeException(e);
         }
     }
@@ -54,7 +56,8 @@ public class SpotifyItemService
                 .collaborative(false)
                 .public_(false)
                 .build();
-        try {
+        try
+        {
             final Playlist playlist = createPlaylistRequest.execute();
             playlistId = playlist.getId();
         } catch (IOException | SpotifyWebApiException | ParseException e) {
@@ -69,9 +72,12 @@ public class SpotifyItemService
 
         String jsonString = getPlaylistByID(playlistIdToFork);
         JSONObject jsonObject = null;
-        try {
+        try
+        {
             jsonObject = new JSONObject(jsonString);
-        }catch (JSONException e){
+        }
+        catch (JSONException e)
+        {
             System.out.println("Error" + e.toString());
         }
 
@@ -111,7 +117,7 @@ public class SpotifyItemService
             trackUriSet = jsonArray != null ? IntStream
                     .range(0, jsonArray.length())
                     .mapToObj(i -> returnTrackUri(jsonArray.getJSONObject(i))).collect(Collectors.toSet()) : new HashSet<>();
-            
+
             String[] trackUriArray = trackUriSet.toArray(new String[0]);
             addTracksToPlaylist(newPlaylistID, trackUriArray);
         }
@@ -152,9 +158,12 @@ public class SpotifyItemService
         final AddItemsToPlaylistRequest addItemsToPlaylistRequest = spotifyApi
                 .addItemsToPlaylist(playlistId, uris)
                 .build();
-        try {
+        try
+        {
             final SnapshotResult snapshotResult = addItemsToPlaylistRequest.execute();
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
+        }
+        catch (IOException | SpotifyWebApiException | ParseException e)
+        {
             System.out.println("Error: " + e.getMessage());
         }
     }
@@ -174,7 +183,8 @@ public class SpotifyItemService
             InputStreamReader inputStreamReader = new InputStreamReader(conn.getInputStream());
             BufferedReader reader = new BufferedReader(inputStreamReader);
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null)
+            {
                 result.append(line);
             }
         }
