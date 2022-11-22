@@ -1,14 +1,12 @@
 package main.java.controllers;
 
+import main.java.models.CombinePlaylistsRequest;
 import main.java.services.SpotifyItemService;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import se.michaelthelin.spotify.model_objects.AbstractModelObject;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 public class SpotifyItemController
@@ -43,5 +41,11 @@ public class SpotifyItemController
     public String[] forkPlaylist(@RequestParam("id") String playlistId, @RequestParam("name") String newPlaylistName)
     {
         return playlistService.forkPlaylist(playlistId, newPlaylistName);
+    }
+
+    @PostMapping(value = "/combine-playlists")
+    public Set<String> combinePlaylists(@RequestBody CombinePlaylistsRequest combinePlaylistsRequest)
+    {
+        return playlistService.combineAndForkMultiplePlaylists(combinePlaylistsRequest);
     }
 }

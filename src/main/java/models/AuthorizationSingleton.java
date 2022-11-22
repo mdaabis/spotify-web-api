@@ -1,7 +1,7 @@
 package main.java.models;
 
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
-
+// TODO - remove class if not used
 public class AuthorizationSingleton {
     private static AuthorizationSingleton mAuthorizationSingleton = null;
     public AuthorizationCodeRequest mAuthorizationCodeRequest;
