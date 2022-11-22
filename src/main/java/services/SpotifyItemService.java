@@ -95,7 +95,6 @@ public class SpotifyItemService
 
         for (String playlistId : playlistIdsToForkArray)
         {
-            // Refactor getting the playlistId again
             String jsonString = getPlaylistByID(playlistId);
             JSONObject jsonObject = null;
             try
@@ -106,11 +105,13 @@ public class SpotifyItemService
             {
                 System.out.println("Error" + e.toString());
             }
-            JSONArray jsonArray = jsonObject.getJSONArray("items");
 
-            trackUriSet = IntStream
+            JSONArray jsonArray = jsonObject != null ? jsonObject.getJSONArray("items") : null;
+
+            trackUriSet = jsonArray != null ? IntStream
                     .range(0, jsonArray.length())
-                    .mapToObj(i -> returnTrackUri(jsonArray.getJSONObject(i))).collect(Collectors.toSet());
+                    .mapToObj(i -> returnTrackUri(jsonArray.getJSONObject(i))).collect(Collectors.toSet()) : new HashSet<>();
+            
             String[] trackUriArray = trackUriSet.toArray(new String[0]);
             addTracksToPlaylist(newPlaylistID, trackUriArray);
         }
