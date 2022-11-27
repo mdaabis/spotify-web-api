@@ -1,17 +1,19 @@
 package main.java.services;
 
 import javafx.util.Pair;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Scanner;
-
-import static main.java.services.AuthorizationService.spotifyApi;
+import java.util.List;
+import java.util.Objects;
 
 public class SamplesService
 {
@@ -22,15 +24,16 @@ public class SamplesService
     {
             Pair<String, String> trackNameAndArtist = spotifyItemService.getTrackNameAndArtistById(songId);
 
-            getWebPage();
+            String webpageHtml = getWebpage();
 
         return trackNameAndArtist;
     }
 
-    public void getWebPage()
+    public String getWebpage()
     {
         StringBuilder html = new StringBuilder(0);
-        try {
+        try
+        {
             String val;
             URL url = new URL(WHOSAMPLED_URL + "silence");
             URLConnection conn = url.openConnection();
@@ -41,14 +44,36 @@ public class SamplesService
 
             /* Catching the string and  if found any null
              character break the String */
-            while ((val = br.readLine()) != null) {
-                html.append(val);
+            while ((val = br.readLine()) != null)
+            {
+                html.append(val+"\n");
             }
             br.close();
+
+            Connection connection = Jsoup.connect(WHOSAMPLED_URL+"silence");
+            connection.userAgent("Mozilla");
+            Document doc = connection.get();
+            Elements listOfSongs = doc.getElementsByClass("list bordered-list");
+            String el = "";
+            for (Element element : listOfSongs.first().children())
+            {
+               if (element.toString().toLowerCase().contains("khalid"))
+               {
+                   el = element.toString();
+               }
+            }
+            System.out.println("element: " + el);
         }
-        catch (IOException e) {
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
-        System.out.println("html: " + html.toString());
+
+        return html.toString();
+    }
+
+    public void parseHtml(String html)
+    {
+
     }
 }
