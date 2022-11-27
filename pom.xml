@@ -55,6 +55,7 @@
       <version>2.0.2</version>
       <type>aar</type>
     </dependency>
+
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter</artifactId>

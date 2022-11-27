@@ -7,6 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.print.Doc;
 import java.io.IOException;
 
 public class SamplesService
@@ -18,16 +19,16 @@ public class SamplesService
     {
             Pair<String, String> trackNameAndArtist = spotifyItemService.getTrackNameAndArtistById(songId);
 
-            Element trackLinkElement = getTrackLinkFromWebpage(trackNameAndArtist.getKey());
+            Element trackLinkElement = getTrackLinkFromWebpage(trackNameAndArtist.getKey(), trackNameAndArtist.getValue());
 
-            getSampledSongsFromLink(trackLinkElement);
+            Document songWebpage = getSongWebpage(trackLinkElement);
 
         return trackNameAndArtist;
     }
 
-    public Element getTrackLinkFromWebpage(String songName)
+    public Element getTrackLinkFromWebpage(String songName, String artist)
     {
-        Element songListEntry = new Element("");
+        Element songListEntry = null;
         try
         {
             Connection connection = Jsoup.connect(WHOSAMPLED_URL + songName.toLowerCase());
@@ -38,11 +39,14 @@ public class SamplesService
 
             for (Element element : listOfSongs.first().children())
             {
-               if (element.toString().toLowerCase().contains("khalid"))
-                   songListEntry = element;
+                String elementStr = element.toString().toLowerCase();
+                if (elementStr.contains(songName.toLowerCase()) && elementStr.contains((artist.toLowerCase())))
+                {
+                    songListEntry = element;
+                    break;
+                    // TODO currently only dealing with first case of title matching. Need to handle multiple
+                }
             }
-
-            System.out.println("element: " + songListEntry.toString());
         }
         catch (IOException e)
         {
@@ -52,13 +56,20 @@ public class SamplesService
         return songListEntry;
     }
 
-    public void getSampledSongsFromLink(Element element)
+    public Document getSongWebpage(Element element)
     {
-
-    }
-
-    public void parseHtml(String html)
-    {
-
+        String linkAddress = element.select("li.listEntry.trackEntry > a").first().attr("abs:href"); // Gets absolute path rather than relative
+        try
+        {
+            Document songWebpage = Jsoup.connect(linkAddress)
+                    .userAgent("Mozilla")
+                    .get();
+            return songWebpage;
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
