@@ -1,32 +1,36 @@
 package main.java.services;
 
 import javafx.util.Pair;
+import main.java.models.Song;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import javax.print.Doc;
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 
 public class SamplesService
 {
     private final SpotifyItemService spotifyItemService = new SpotifyItemService();
     private static final String WHOSAMPLED_URL = "https://www.whosampled.com/search/tracks/?q=";
 
-    public Pair<String, String> getSongSamples(String songId)
+    public Pair<String, List<String>> getRelatedSongs(String songId)
     {
-            Pair<String, String> trackNameAndArtist = spotifyItemService.getTrackNameAndArtistById(songId);
+            Pair<String, List<String>> trackNameAndArtist = spotifyItemService.getTrackNameAndArtistById(songId);
 
             Element trackLinkElement = getTrackLinkFromWebpage(trackNameAndArtist.getKey(), trackNameAndArtist.getValue());
 
             Document songWebpage = getSongWebpage(trackLinkElement);
 
+            createSongObject(songWebpage);
+
         return trackNameAndArtist;
     }
 
-    public Element getTrackLinkFromWebpage(String songName, String artist)
+    protected Element getTrackLinkFromWebpage(String songName, List<String> artists)
     {
         Element songListEntry = null;
         try
@@ -40,7 +44,7 @@ public class SamplesService
             for (Element element : listOfSongs.first().children())
             {
                 String elementStr = element.toString().toLowerCase();
-                if (elementStr.contains(songName.toLowerCase()) && elementStr.contains((artist.toLowerCase())))
+                if (elementStr.contains(songName.toLowerCase()) && anyArtistCredited(artists, elementStr))
                 {
                     songListEntry = element;
                     break;
@@ -56,20 +60,47 @@ public class SamplesService
         return songListEntry;
     }
 
-    public Document getSongWebpage(Element element)
+    protected Document getSongWebpage(Element element)
     {
-        String linkAddress = element.select("li.listEntry.trackEntry > a").first().attr("abs:href"); // Gets absolute path rather than relative
+        String linkAddress = Objects.requireNonNull(element.select("li.listEntry.trackEntry > a").first()).attr("abs:href"); // Gets absolute path rather than relative
         try
         {
-            Document songWebpage = Jsoup.connect(linkAddress)
+            return Jsoup.connect(linkAddress)
                     .userAgent("Mozilla")
                     .get();
-            return songWebpage;
         }
         catch (IOException e)
         {
             e.printStackTrace();
         }
         return null;
+    }
+
+    protected Song createSongObject(Document webpage)
+    {
+        String[] nameAndArtist = webpage.getElementsByTag("h1").text().split(" by ");
+        String name = nameAndArtist[0];
+        String artist = nameAndArtist[nameAndArtist.length - 1];
+        String url = webpage.location();
+
+        Elements itemPropElements = webpage.getElementsByAttribute("itemprop");
+        Element imageElement = itemPropElements.stream()
+                        .filter(e -> e.toString().contains("thumbnailUrl")).toList().get(0);
+        String imageUrl = imageElement.attr("abs:src");
+
+        Song song = new Song(name, artist, url, imageUrl);
+
+
+        return new Song();
+    }
+
+    protected boolean anyArtistCredited(List<String> artists, String elementStr)
+    {
+        for(String artist : artists)
+        {
+            if(elementStr.contains(artist.toLowerCase()))
+                return true;
+        }
+        return false;
     }
 }

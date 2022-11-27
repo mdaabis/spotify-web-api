@@ -11,10 +11,7 @@ import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.AbstractModelObject;
 import se.michaelthelin.spotify.model_objects.special.SearchResult;
-import se.michaelthelin.spotify.model_objects.specification.Paging;
-import se.michaelthelin.spotify.model_objects.specification.Playlist;
-import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
-import se.michaelthelin.spotify.model_objects.specification.Track;
+import se.michaelthelin.spotify.model_objects.specification.*;
 import se.michaelthelin.spotify.requests.data.playlists.AddItemsToPlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.CreatePlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfUsersPlaylistsRequest;
@@ -196,15 +193,18 @@ public class SpotifyItemService
         return result.toString();
     }
 
-    public Pair<String, String> getTrackNameAndArtistById(String songId)
+    public Pair<String, List<String>> getTrackNameAndArtistById(String songId)
     {
-        Pair<String, String> songNameAndArtist = null;
+        Pair<String, List<String>> songNameAndArtist = null;
         try {
             final Track track = spotifyApi.getTrack(songId)
                     .build()
                     .execute();
 
-            songNameAndArtist = new Pair<>(track.getName(), track.getId());
+            List<String> artists = Arrays.stream(track.getArtists())
+                    .map(a -> a.getName())
+                    .collect(Collectors.toList());
+            songNameAndArtist = new Pair<>(track.getName(), artists);
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             throw new RuntimeException(e);
         }
