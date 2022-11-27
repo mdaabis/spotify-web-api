@@ -7,13 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.List;
-import java.util.Objects;
 
 public class SamplesService
 {
@@ -24,52 +18,43 @@ public class SamplesService
     {
             Pair<String, String> trackNameAndArtist = spotifyItemService.getTrackNameAndArtistById(songId);
 
-            String webpageHtml = getWebpage();
+            Element trackLinkElement = getTrackLinkFromWebpage(trackNameAndArtist.getKey());
+
+            getSampledSongsFromLink(trackLinkElement);
 
         return trackNameAndArtist;
     }
 
-    public String getWebpage()
+    public Element getTrackLinkFromWebpage(String songName)
     {
-        StringBuilder html = new StringBuilder(0);
+        Element songListEntry = new Element("");
         try
         {
-            String val;
-            URL url = new URL(WHOSAMPLED_URL + "silence");
-            URLConnection conn = url.openConnection();
-            conn.addRequestProperty("User-Agent", "Mozilla");
-
-            // Reading the HTML content from the .HTML File
-            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-
-            /* Catching the string and  if found any null
-             character break the String */
-            while ((val = br.readLine()) != null)
-            {
-                html.append(val+"\n");
-            }
-            br.close();
-
-            Connection connection = Jsoup.connect(WHOSAMPLED_URL+"silence");
+            Connection connection = Jsoup.connect(WHOSAMPLED_URL + songName.toLowerCase());
             connection.userAgent("Mozilla");
             Document doc = connection.get();
+
             Elements listOfSongs = doc.getElementsByClass("list bordered-list");
-            String el = "";
+
             for (Element element : listOfSongs.first().children())
             {
                if (element.toString().toLowerCase().contains("khalid"))
-               {
-                   el = element.toString();
-               }
+                   songListEntry = element;
             }
-            System.out.println("element: " + el);
+
+            System.out.println("element: " + songListEntry.toString());
         }
         catch (IOException e)
         {
             e.printStackTrace();
         }
 
-        return html.toString();
+        return songListEntry;
+    }
+
+    public void getSampledSongsFromLink(Element element)
+    {
+
     }
 
     public void parseHtml(String html)
