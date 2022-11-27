@@ -1,5 +1,6 @@
 package main.java.services;
 
+import javafx.util.Pair;
 import main.java.models.CombinePlaylistsRequest;
 import main.java.utils.AuthorisationUtils;
 import main.java.utils.SpotifyItemUtils;
@@ -10,10 +11,10 @@ import org.json.JSONObject;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.AbstractModelObject;
 import se.michaelthelin.spotify.model_objects.special.SearchResult;
-import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.data.playlists.AddItemsToPlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.CreatePlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfUsersPlaylistsRequest;
@@ -160,7 +161,7 @@ public class SpotifyItemService
                 .build();
         try
         {
-            final SnapshotResult snapshotResult = addItemsToPlaylistRequest.execute();
+            addItemsToPlaylistRequest.execute();
         }
         catch (IOException | SpotifyWebApiException | ParseException e)
         {
@@ -193,6 +194,22 @@ public class SpotifyItemService
             System.out.println("Error: " + e);
         }
         return result.toString();
+    }
+
+    public Pair<String, String> getTrackNameAndArtistById(String songId)
+    {
+        Pair<String, String> songNameAndArtist = null;
+        try {
+            final Track track = spotifyApi.getTrack(songId)
+                    .build()
+                    .execute();
+
+            songNameAndArtist = new Pair<>(track.getName(), track.getId());
+        } catch (IOException | SpotifyWebApiException | ParseException e) {
+            throw new RuntimeException(e);
+        }
+
+        return songNameAndArtist;
     }
 
     private String returnTrackUri(JSONObject json)
