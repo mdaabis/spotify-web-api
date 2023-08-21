@@ -22,7 +22,6 @@ public class SamplesService
             Pair<String, List<String>> trackNameAndArtist = spotifyItemService.getTrackNameAndArtistById(songId);
 
             Element trackLinkElement = getTrackLinkFromWebpage(trackNameAndArtist.getKey(), trackNameAndArtist.getValue());
-
             Document songWebpage = getSongWebpage(trackLinkElement);
 
             createSongObject(songWebpage);
@@ -35,7 +34,10 @@ public class SamplesService
         Element songListEntry = null;
         try
         {
-            Connection connection = Jsoup.connect(WHOSAMPLED_URL + songName.toLowerCase());
+            String whoSampledSongPath = WHOSAMPLED_URL + songName;
+            whoSampledSongPath = whoSampledSongPath.replaceAll(" ", "-");
+            whoSampledSongPath = whoSampledSongPath.replaceAll("'", "%27");
+            Connection connection = Jsoup.connect(whoSampledSongPath);
             connection.userAgent("Mozilla");
             Document doc = connection.get();
 
@@ -86,13 +88,13 @@ public class SamplesService
         Elements itemPropElements = webpage.getElementsByAttribute("itemprop");
         Element imageElement = itemPropElements.stream()
                         .filter(e -> e.toString().contains("thumbnailUrl")).toList().get(0);
-        String imageUrl = imageElement.attr("abs:src");
+        String imageUrl = imageElement.attr("abs:src"); //TODO check if needed
 
         Song song = new Song(name, artist, url, imageUrl);
 
         Elements x = webpage.getElementsByClass("sampleEntry");
 
-        return new Song();
+        return song;
     }
 
     protected boolean anyArtistCredited(List<String> artists, String elementStr)

@@ -1,17 +1,19 @@
 package main.java.models;
 
+import java.util.List;
+
 public class CombinePlaylistsRequest
 {
-    private String playlistIds;
-    private String newPlaylistName;
+    private List<String> mPlaylistIds;
+    private String mNewPlaylistName;
 
-    public String getPlaylistIds()
+    public List<String> getPlaylistIds()
     {
-        return playlistIds;
+        return mPlaylistIds;
     }
 
     public String getNewPlaylistName()
     {
-        return newPlaylistName;
+        return mNewPlaylistName;
     }
 }

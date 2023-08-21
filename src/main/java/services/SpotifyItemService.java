@@ -78,7 +78,7 @@ public class SpotifyItemService
         }
         catch (JSONException e)
         {
-            System.out.println("Error" + e.toString());
+            System.out.println("Error" + e); //TODO specify error
         }
 
         JSONArray jsonArray = jsonObject.getJSONArray("items");
@@ -93,7 +93,7 @@ public class SpotifyItemService
 
     public Set<String> combineAndForkMultiplePlaylists(CombinePlaylistsRequest combinePlaylistsRequest)
     {
-        String[] playlistIdsToForkArray = combinePlaylistsRequest.getPlaylistIds().split(",");
+        List<String> playlistIdsToForkArray = combinePlaylistsRequest.getPlaylistIds();
         String newPlaylistName = combinePlaylistsRequest.getNewPlaylistName();
         String newPlaylistID = createNewPlaylist(newPlaylistName);
 
@@ -124,11 +124,11 @@ public class SpotifyItemService
         return trackUriSet;
     }
 
-    public <T extends AbstractModelObject> Map<String, List<T>> search(String searchString, String types)
+    public <T extends AbstractModelObject> Map<String, List<T>> searchByType(String searchString, String types)
     {
         Map<String, List<T>> searchResultsMap = new HashMap<>();
         Arrays.stream(types.split(","))
-                .forEach(type -> search(searchResultsMap, searchString, type));
+                .forEach(type -> searchByType(searchResultsMap, searchString, type));
 
         searchResultsMap.values().forEach(list ->
         {
@@ -146,7 +146,7 @@ public class SpotifyItemService
         return searchResultsMap;
     }
 
-    public <T extends AbstractModelObject> void search(Map<String, List<T>> searchResultsMap, String searchString, String type)
+    private <T extends AbstractModelObject> void searchByType(Map<String, List<T>> searchResultsMap, String searchString, String type)
     {
         SearchItemRequest searchItemRequest = spotifyApi.searchItem(searchString, type)
                 .limit(50)
@@ -172,7 +172,7 @@ public class SpotifyItemService
         }
     }
 
-    public void addTracksToPlaylist(String playlistId, String[] uris)
+    private void addTracksToPlaylist(String playlistId, String[] uris)
     {
         final AddItemsToPlaylistRequest addItemsToPlaylistRequest = spotifyApi
                 .addItemsToPlaylist(playlistId, uris)
@@ -218,16 +218,19 @@ public class SpotifyItemService
     public Pair<String, List<String>> getTrackNameAndArtistById(String songId)
     {
         Pair<String, List<String>> songNameAndArtist = null;
-        try {
-            final Track track = spotifyApi.getTrack(songId)
+        try
+        {
+            Track track = spotifyApi.getTrack(songId)
                     .build()
                     .execute();
 
             List<String> artists = Arrays.stream(track.getArtists())
-                    .map(a -> a.getName())
+                    .map(ArtistSimplified::getName)
                     .collect(Collectors.toList());
             songNameAndArtist = new Pair<>(track.getName(), artists);
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
+        }
+        catch (IOException | SpotifyWebApiException | ParseException e) //TODO split up and add specific logs
+        {
             throw new RuntimeException(e);
         }
 

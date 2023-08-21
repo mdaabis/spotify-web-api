@@ -29,7 +29,7 @@ public class SpotifyItemController
     @GetMapping(value = "/search")
     public <T extends AbstractModelObject> Map<String, List<T>> searchPlaylist(@RequestParam("search") String search, @RequestParam("type") String type)
     {
-       return playlistService.search(search, type);
+       return playlistService.searchByType(search, type);
     }
 
     @GetMapping(value = "/get-playlist")
