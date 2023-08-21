@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import se.michaelthelin.spotify.model_objects.AbstractModelObject;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -26,7 +27,7 @@ public class SpotifyItemController
     }
 
     @GetMapping(value = "/search")
-    public <T extends AbstractModelObject> List<T> searchPlaylist(@RequestParam("search") String search, @RequestParam("type") String type)
+    public <T extends AbstractModelObject> Map<String, List<T>> searchPlaylist(@RequestParam("search") String search, @RequestParam("type") String type)
     {
        return playlistService.search(search, type);
     }

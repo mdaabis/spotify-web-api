@@ -8,6 +8,8 @@ import org.apache.hc.core5.http.ParseException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.AbstractModelObject;
 import se.michaelthelin.spotify.model_objects.special.SearchResult;
@@ -30,7 +32,7 @@ import static main.java.services.AuthorizationService.spotifyApi;
 
 public class SpotifyItemService
 {
-    private final String REQUEST_URL = SpotifyItemUtils.BASE_SPOTIFY_URL + "playlists/";
+    private final Logger log = LoggerFactory.getLogger(SpotifyItemService.class);
 
     public List<String> getUserPlaylists()
     {
@@ -122,33 +124,52 @@ public class SpotifyItemService
         return trackUriSet;
     }
 
-    public <T extends AbstractModelObject> List<T> search(String searchString, String... typeArray)
+    public <T extends AbstractModelObject> Map<String, List<T>> search(String searchString, String types)
     {
-        String type = String.join(",", typeArray);
-        final SearchItemRequest searchItemRequest = spotifyApi.searchItem(searchString, type)
+        Map<String, List<T>> searchResultsMap = new HashMap<>();
+        Arrays.stream(types.split(","))
+                .forEach(type -> search(searchResultsMap, searchString, type));
+
+        searchResultsMap.values().forEach(list ->
+        {
+            list.sort((o1, o2) -> {
+                if (o1 instanceof Artist && o2 instanceof Artist) {
+                    return ((Artist) o2).getPopularity().compareTo(((Artist) o1).getPopularity());
+                } else if (o1 instanceof Track && o2 instanceof Track) {
+                    return ((Track) o2).getPopularity().compareTo(((Track) o1).getPopularity());
+                } else {
+                    return 0; // No sorting for other subclasses
+                }
+            });
+        });
+
+        return searchResultsMap;
+    }
+
+    public <T extends AbstractModelObject> void search(Map<String, List<T>> searchResultsMap, String searchString, String type)
+    {
+        SearchItemRequest searchItemRequest = spotifyApi.searchItem(searchString, type)
                 .limit(50)
                 .build();
 
-        List<T> list = new ArrayList<>();
         try
         {
-            final SearchResult searchResult = searchItemRequest.execute();
+            SearchResult searchResult = searchItemRequest.execute();
 
             switch (type)
             {
-                case "playlist" -> Arrays.stream(searchResult.getPlaylists().getItems()).forEach(e -> list.add((T) e));
-                case "track" -> Arrays.stream(searchResult.getTracks().getItems()).forEach(e -> list.add((T) e));
-                case "album" -> Arrays.stream(searchResult.getAlbums().getItems()).forEach(e -> list.add((T) e));
-                case "artist" -> Arrays.stream(searchResult.getArtists().getItems()).forEach(e -> list.add((T) e));
-                case "show" -> Arrays.stream(searchResult.getShows().getItems()).forEach(e -> list.add((T) e));
-                case "episode" -> Arrays.stream(searchResult.getEpisodes().getItems()).forEach(e -> list.add((T) e));
+                case "playlist" -> Arrays.stream(searchResult.getPlaylists().getItems()).forEach(e ->   searchResultsMap.computeIfAbsent(type, k -> new ArrayList<>()).add((T) e));
+                case "track" -> Arrays.stream(searchResult.getTracks().getItems()).forEach(e ->         searchResultsMap.computeIfAbsent(type, k -> new ArrayList<>()).add((T) e));
+                case "album" -> Arrays.stream(searchResult.getAlbums().getItems()).forEach(e ->         searchResultsMap.computeIfAbsent(type, k -> new ArrayList<>()).add((T) e));
+                case "artist" -> Arrays.stream(searchResult.getArtists().getItems()).forEach(e ->       searchResultsMap.computeIfAbsent(type, k -> new ArrayList<>()).add((T) e));
+                case "show" -> Arrays.stream(searchResult.getShows().getItems()).forEach(e ->           searchResultsMap.computeIfAbsent(type, k -> new ArrayList<>()).add((T) e));
+                case "episode" -> Arrays.stream(searchResult.getEpisodes().getItems()).forEach(e ->     searchResultsMap.computeIfAbsent(type, k -> new ArrayList<>()).add((T) e));
             }
         }
         catch (IOException | SpotifyWebApiException | ParseException e)
         {
-            System.out.println("Error: " + e.getMessage());
+            log.debug("Search for {} for type {} unsuccessful because of {}", searchString, type, e.getMessage());
         }
-        return list;
     }
 
     public void addTracksToPlaylist(String playlistId, String[] uris)
@@ -169,6 +190,7 @@ public class SpotifyItemService
     public String getPlaylistByID(String playlistId)
     {
         StringBuilder result = new StringBuilder();
+        String REQUEST_URL = SpotifyItemUtils.BASE_SPOTIFY_URL + "playlists/";
         String getPlaylistItemsUrl = REQUEST_URL + playlistId + "/tracks";
         try
         {

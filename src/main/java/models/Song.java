@@ -1,6 +1,7 @@
 package main.java.models;
 
-import java.net.URL;
+import javafx.util.Pair;
+
 import java.util.List;
 
 public class Song
@@ -11,10 +12,10 @@ public class Song
     private String whosampledPage;
     private String image;
 
-    private List<Song> samples;
-    private List<Song> sampledIn;
-    private List<Song> covers;
-    private List<Song> remixes;
+    private List<Pair<String, String>> samples;
+    private List<Pair<String, String>> sampledIn;
+    private List<Pair<String, String>> covers;
+    private List<Pair<String, String>> remixes;
 
     public Song(String name, String artist, String whosampledPage, String image)
     {
@@ -59,35 +60,35 @@ public class Song
         this.image = image;
     }
 
-    public List<Song> getSamples() {
+    public List<Pair<String, String>> getSamples() {
         return samples;
     }
 
-    public void setSamples(List<Song> samples) {
+    public void setSamples(List<Pair<String, String>> samples) {
         this.samples = samples;
     }
 
-    public List<Song> getSampledIn() {
+    public List<Pair<String, String>> getSampledIn() {
         return sampledIn;
     }
 
-    public void setSampledIn(List<Song> sampledIn) {
+    public void setSampledIn(List<Pair<String, String>> sampledIn) {
         this.sampledIn = sampledIn;
     }
 
-    public List<Song> getCovers() {
+    public List<Pair<String, String>> getCovers() {
         return covers;
     }
 
-    public void setCovers(List<Song> covers) {
+    public void setCovers(List<Pair<String, String>> covers) {
         this.covers = covers;
     }
 
-    public List<Song> getRemixes() {
+    public List<Pair<String, String>> getRemixes() {
         return remixes;
     }
 
-    public void setRemixes(List<Song> remixes) {
+    public void setRemixes(List<Pair<String, String>> remixes) {
         this.remixes = remixes;
     }
 }

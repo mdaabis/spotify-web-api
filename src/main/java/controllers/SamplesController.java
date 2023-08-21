@@ -18,5 +18,4 @@ public class SamplesController
     {
         return mSampleService.getRelatedSongs(songId);
     }
-
 }

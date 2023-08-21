@@ -48,7 +48,7 @@ public class SamplesService
                 {
                     songListEntry = element;
                     break;
-                    // TODO currently only dealing with first case of title matching. Need to handle multiple
+                    //TODO currently only dealing with first case of title matching. Need to handle multiple
                 }
             }
         }
@@ -90,6 +90,7 @@ public class SamplesService
 
         Song song = new Song(name, artist, url, imageUrl);
 
+        Elements x = webpage.getElementsByClass("sampleEntry");
 
         return new Song();
     }
